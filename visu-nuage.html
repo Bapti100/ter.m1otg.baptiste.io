@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Visualisation nuage de points (COPC)</title>
+<style>
+  html, body { margin:0; padding:0; height:100%; background:#0d0d0d; overflow:hidden; }
+  #info {
+    position:absolute; top:10px; left:10px; color:#eee; font-family:sans-serif;
+    font-size:13px; background:rgba(0,0,0,0.55); padding:8px 12px; border-radius:6px;
+    line-height:1.5; max-width:70vw;
+  }
+  #info input[type="range"] { vertical-align:middle; }
+</style>
+</head>
+<body>
+<div id="info">Chargement du nuage de points…</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.164.1",
+    "three/addons/": "https://esm.sh/three@0.164.1/examples/jsm/",
+    "copc": "https://esm.sh/copc@0.0.8",
+    "laz-perf": "https://esm.sh/laz-perf@0.0.7"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { Las } from "copc";
+import { LazPerf } from "laz-perf";
+
+// ==========================================================
+// À MODIFIER : nom (ou chemin relatif) de ton fichier .copc.laz
+// place-le à côté de ce fichier HTML dans ton dossier MAMP
+// ==========================================================
+const FICHIER_NUAGE = "nuage_nettoye_final.copc.laz";
+const LAZ_PERF_VERSION = "0.0.7";
+
+const info = document.getElementById("info");
+
+// --- Scène Three.js de base ---
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0d0d);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 100000);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping;
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// --- Décodeur LAZ (WebAssembly), utilisé pour désompresser le fichier ---
+let wasmPromise = null;
+function decodeur() {
+  if (!wasmPromise) {
+    wasmPromise = LazPerf.create({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/laz-perf@${LAZ_PERF_VERSION}/lib/${file}`
+    });
+  }
+  return wasmPromise;
+}
+
+// --- Lecture native du fichier COPC/LAS 1.4 (via la librairie `copc`) ---
+async function chargerVue(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Fichier introuvable (HTTP ${res.status}) : ${url}`);
+  const bytes = new Uint8Array(await res.arrayBuffer());
+
+  const header = Las.Header.parse(bytes);
+  const pointData = await Las.PointData.decompressFile(bytes, decodeur());
+
+  const getter = async (begin, end) => bytes.slice(begin, end);
+  const vlrs = await Las.Vlr.walk(getter, header);
+  const ebVlr = Las.Vlr.find(vlrs, "LASF_Spec", 4);
+  const eb = ebVlr && Las.ExtraBytes.parse(await Las.Vlr.fetch(getter, ebVlr));
+
+  return Las.View.create(pointData, header, eb);
+}
+
+async function chargerNuage() {
+  try {
+    const view = await chargerVue(FICHIER_NUAGE);
+    const nbPoints = view.pointCount;
+
+    const getX = view.getter("X");
+    const getY = view.getter("Y");
+    const getZ = view.getter("Z");
+
+    // Recentrage nécessaire pour la précision flottante : les nuages LiDAR
+    // français sont souvent en Lambert93, avec des coordonnées de plusieurs
+    // centaines de milliers de mètres.
+    let cx = 0, cy = 0, cz = 0;
+    for (let i = 0; i < nbPoints; i++) {
+      cx += getX(i); cy += getY(i); cz += getZ(i);
+    }
+    cx /= nbPoints; cy /= nbPoints; cz /= nbPoints;
+
+    // LAS stocke Z comme altitude ; Three.js utilise Y comme axe vertical -> on permute.
+    const positions = new Float32Array(nbPoints * 3);
+    for (let i = 0; i < nbPoints; i++) {
+      positions[i * 3]     = getX(i) - cx;
+      positions[i * 3 + 1] = getZ(i) - cz;
+      positions[i * 3 + 2] = getY(i) - cy;
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+
+    let material;
+    if (view.dimensions.Red) {
+      const getR = view.getter("Red");
+      const getG = view.getter("Green");
+      const getB = view.getter("Blue");
+      // LAS 1.4 encode la couleur sur 16 bits (0-65535), en sRGB (l'espace
+      // "d'affichage" classique, celui que montre CloudCompare). Three.js
+      // attend des couleurs de sommets en espace linéaire : sans conversion,
+      // il réapplique une correction gamma par-dessus, ce qui délave tout.
+      const srgbVersLineaire = (c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+      const colors = new Float32Array(nbPoints * 3);
+      for (let i = 0; i < nbPoints; i++) {
+        colors[i * 3]     = srgbVersLineaire(getR(i) / 65535);
+        colors[i * 3 + 1] = srgbVersLineaire(getG(i) / 65535);
+        colors[i * 3 + 2] = srgbVersLineaire(getB(i) / 65535);
+      }
+      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      material = new THREE.PointsMaterial({ vertexColors: true });
+    } else {
+      material = new THREE.PointsMaterial({ color: 0x35d0ff });
+    }
+
+    geometry.computeBoundingSphere();
+    const sphere = geometry.boundingSphere;
+    const tailleInitiale = Math.max(sphere.radius / 250, 0.005);
+    material.size = tailleInitiale;
+
+    scene.add(new THREE.Points(geometry, material));
+
+    controls.target.copy(sphere.center);
+    camera.position.copy(sphere.center).add(
+      new THREE.Vector3(sphere.radius, sphere.radius, sphere.radius)
+    );
+    camera.near = Math.max(sphere.radius / 1000, 0.001);
+    camera.far = sphere.radius * 100;
+    camera.updateProjectionMatrix();
+    controls.update();
+
+    info.innerHTML = `
+      ${nbPoints.toLocaleString("fr-FR")} points chargés<br>
+      Taille des points :
+      <input id="tailleSlider" type="range" min="${tailleInitiale / 10}" max="${tailleInitiale * 10}"
+             step="${tailleInitiale / 20}" value="${tailleInitiale}">
+    `;
+    document.getElementById("tailleSlider").addEventListener("input", (e) => {
+      material.size = parseFloat(e.target.value);
+    });
+
+  } catch (err) {
+    info.textContent = "Erreur de chargement : " + err.message;
+    info.style.background = "rgba(150,0,0,0.7)";
+    console.error(err);
+  }
+}
+
+chargerNuage();
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analyse morphologique d'un embâcle - LiDAR &amp; photogrammétrie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="site-title">Bois &amp; débris - TER Bruche</div>
+    <nav>
+      <a href="#capteurs">Capteurs</a>
+      <a href="#pretraitement">Prétraitement</a>
+      <a href="#traitement">Traitement</a>
+      <a href="#discussion">Discussion</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============================================ -->
+<!-- LE BUT -->
+<!-- ============================================ -->
+<section class="hero">
+  <div class="wrap">
+    <div class="logos">
+      <img src="./img/00_logo/geo.png" alt="Logo Université de Strasbourg">
+      <img src="./img/00_logo/otg.png" alt="Logo Master OTG">
+      <img src="./img/00_logo/live.png" alt="Logo laboratoire">
+    </div>
+    <div class="kicker">FANTOU Baptiste - Master 1 OTG - Université de Strasbourg</div>
+    <h1>Analyse morphologique des embâcles et stockage des déchets anthropiques en milieu fluvial : approche LiDAR et photogrammétrique sur la Bruche.</h1>
+    <p class="lede">
+      Ce site web est un court résumé de mon mémoire portant sur l'analyse morphologique d'embâcles de la Bruche, une rivière
+      vosgienne aux régimes hydrologiques contrastés. Pour étudier ces embâcles, plusieurs
+      méthodes ont été utilisées, comme le LiDAR aéroporté, la photogrammétrie SfM ou
+      encore un LiDAR portable. Ces différentes méthodes ont été appliquées afin de déterminer
+      des caractéristiques propres aux deux embâcles analysés, et de faire de l'analyse spectrale,
+      afin de dissocier des objets comme les déchets ou les bois morts.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- 01 - CAPTEURS -->
+<!-- ============================================ -->
+<section class="chapitre" id="capteurs">
+  <div class="wrap">
+    <div class="chap-head">
+      <div class="chap-num">01</div>
+      <h2>Présentation des capteurs et des méthodes</h2>
+    </div>
+
+    <div class="capteurs-grid">
+      <div class="capteur">
+        <div class="figure">
+          <img src="./img/20_capteur/lidar_unitree.jpg" alt="Photo du LiDAR Unitree L2">
+        </div>
+        <h3>LiDAR</h3>
+        <p>
+           Le LiDAR (Light Detection And Ranging) est une technologie reposant
+           sur l'émission d'impulsions laser et la mesure du temps de retour
+           de l'écho. À partir d'une de ces impulsions laser, un retour fournit
+           une coordonnée tridimensionnelle précise. Le LiDAR Unitree L2 a été
+           utilisé afin de tester l'acquisition à partir d'un capteur d'entrée de gamme.
+        </p>
+      </div>
+      <div class="capteur">
+        <div class="figure">
+          <img src="./img/20_capteur/dji_mini.jpg" alt="Photo du drone DJI Mini 3">
+        </div>
+        <h3>Photogrammétrie</h3>
+        <p>
+          La photogrammétrie reconstitue une scène en 3D à partir de plusieurs
+          photos acquises sous différents angles. Le but est d'identifier des points
+          d'intérêt communs entre les images, de déterminer la position relative
+          des caméras et de générer un nuage de points colorisés en RGB. Un DJI mini 3
+          a été utilisé afin de tester l'acquisition à partir d'un capteur d'entrée de gamme.
+        </p>
+      </div>
+      <div class="capteur">
+        <div class="figure">
+          <img src="./img/20_capteur/dji_matrice.jpg" alt="Photo du DJI Matrice 400 + Zenmuse L2">
+        </div>
+        <h3>Fusion</h3>
+        <p>
+          Sur le Matrice 400, la caméra intégrée au Zenmuse L2 colorise
+          directement le nuage LiDAR en RGB, combinant la précision
+          géométrique du laser à l'information spectrale nécessaire aux
+          filtres de végétation et aux indices spectraux utilisés en aval.
+        </p>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Capteur</th>
+          <th>Type</th>
+          <th>Précision</th>
+          <th>Avantages</th>
+          <th>Inconvénients</th>
+          <th>Coût</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>DJI Matrice 400<br>+ Zenmuse L2</td>
+          <td>Drone LiDAR haut de gamme</td>
+          <td>Centimétrique (RTK)</td>
+          <td>Précision élevée, colorisation du nuage, couverture homogène, fiabilité</td>
+          <td>Coût élevé, nécessite un bon calcul des positions initiales</td>
+          <td>30 000 €</td>
+        </tr>
+        <tr>
+          <td>DJI Mini 3</td>
+          <td>Drone caméra grand public</td>
+          <td>Décimétrique à métrique</td>
+          <td>Léger, facile à utiliser, bon pour les textures et l'éclairage favorable</td>
+          <td>Précision GPS limitée (monofréquence), qualité dépendante de la scène</td>
+          <td>400 €</td>
+        </tr>
+        <tr>
+          <td>Unitree L2</td>
+          <td>LiDAR portable bas de gamme</td>
+          <td>Dépend du SLAM et du recalage</td>
+          <td>Rapide, flexible, accès aux zones difficiles (cœur de l'embâcle), abordable</td>
+          <td>Géoréférencement peu précis, nécessite un recalage avec un nuage de référence</td>
+          <td>600 €</td>
+        </tr>
+      </tbody>
+      <caption>Comparaison des capteurs utilisés</caption>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- 02 - PRÉTRAITEMENT -->
+<!-- ============================================ -->
+<section class="chapitre panel" id="pretraitement">
+  <div class="wrap">
+    <div class="chap-head">
+      <div class="chap-num">02</div>
+      <h2>Prétraitement des nuages</h2>
+    </div>
+
+    <div class="split">
+      <div>
+        <h3>Filtre de végétation RGB</h3>
+        <p>
+          La végétation absorbe fortement le rouge et une partie du bleu par
+          activité chlorophyllienne, ne laissant que le vert être réfléchi.
+          Un seuil est choisi sur l'ortho-image à partir de l'indice ExG, puis
+          appliqué au nuage colorisé pour retirer la majorité de la
+          végétation et l'alléger.
+        </p>
+        <table>
+          <thead><tr><th>Indice</th><th>Formule</th><th>Pourquoi</th></tr></thead>
+          <tbody>
+            <tr><td>ExG</td><td class="formule">2G − R − B</td><td>Excès de vert, réagit fortement au feuillage</td></tr>
+            <tr><td>VARI</td><td class="formule">(G−R) / (G+R−B)</td><td>Robuste aux variations d'exposition</td></tr>
+            <tr><td>GLI</td><td class="formule">(2G−R−B) / (2G+R+B)</td><td>Normalisé, stable en toutes conditions</td></tr>
+          </tbody>
+          <caption>Indices de végétation</caption>
+        </table>
+      </div>
+      <div>
+        <h3>Filtre de végétation LiDAR</h3>
+        <p>
+          Sans information colorimétrique fiable, le filtre s'appuie sur la
+          géométrie : un MNT est calculé à partir des 5 % de points les plus
+          bas de chaque cellule d'une grille. La hauteur relative de chaque
+          point au MNT est ensuite comparée à un seuil maximal : les points
+          trop hauts sont retirés, en conservant les échos multiples proches
+          du sol pour préserver les berges et petits artefacts.
+        </p>
+      </div>
+    </div>
+
+    <div class="bloc" style="margin-top:56px;">
+      <h3>Suppression des points indésirables du nuage</h3>
+      <p>
+        Après le filtrage de végétation, des points fantômes subsistent :
+        bruit photogrammétrique diffus (reflets, erreurs de reconstruction)
+        ou petits clusters isolés (artefacts, objets flottants). Un
+        nettoyage géométrique en deux étapes les élimine :
+      </p>
+      <ul>
+        <li>D'abord le <strong>SOR (Statistical Outlier Removal)</strong>, permettant d'élimine les points dont la distance moyenne aux voisins dépasse un seuil (moyenne + multiplicateur × écart-type des distances moyennes). Deux paramètres : le nombre de voisins analysés et le multiplicateur d'écart-type.</li>
+        <li>Puis le <strong>DBSCAN</strong>, qui est un clustering non supervisé basé sur la densité (Ester et al., 1996) : un point est central s'il compte au moins <em>minPts</em> voisins dans un rayon <em>ε</em>. Les clusters jugés trop petits par rapport au reste du nuage sont supprimés.</li>
+      </ul>
+      <p>Ce nettoyage automatisé évite de traquer à la main les petits clusters et points isolés, parfois invisibles à l'œil.</p>
+    </div>
+
+    <div class="bloc">
+      <h3>Nuage allégé</h3>
+      <p>
+        Aperçu interactif d'un nuage acquis par le DJI Matrice 400 
+		une fois la végétation filtrée et les points indésirables supprimés.
+      </p>
+      <iframe src="visu-nuage.html" class="viewer-embed" title="Visualisation du nuage allégé"></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- 03 - TRAITEMENT -->
+<!-- ============================================ -->
+<section class="chapitre" id="traitement">
+  <div class="wrap">
+    <div class="chap-head">
+      <div class="chap-num">03</div>
+      <h2>Traitement des nuages</h2>
+    </div>
+
+    <div class="bloc">
+      <h3>Comparaison des signatures spectrales</h3>
+      <p>
+		Au-delà du filtrage, plusieurs indices spectraux, calculés à partir du RGB,
+		ou des indices géométriques, ont permis de discriminer 
+		bois, eau, sédiment et déchets dans le nuage.
+      </p>
+      <table>
+        <thead><tr><th>Indice</th><th>Formule</th><th>Utilité</th></tr></thead>
+        <tbody>
+          <tr><td>Rouge (R)</td><td class="formule">canal normalisé [0,1]</td><td>Distinguer les tons chauds (bois, sols nus) des autres matériaux</td></tr>
+          <tr><td>Vert (G)</td><td class="formule">canal normalisé [0,1]</td><td>Essentiel pour détecter la végétation (chlorophylle)</td></tr>
+          <tr><td>Bleu (B)</td><td class="formule">canal normalisé [0,1]</td><td>Identifier les matériaux métalliques ou bleutés (déchets, eau)</td></tr>
+          <tr><td>Intensité LiDAR</td><td class="formule">canal LAS normalisé [0,1]</td><td>Réflectance NIR/SWIR, sensible à l'eau, la texture, le matériau</td></tr>
+          <tr><td>ExG</td><td class="formule">2G − R − B</td><td>Végétation, précision 85-99 %</td></tr>
+          <tr><td>GLI</td><td class="formule">(2G−R−B)/(2G+R+B)</td><td>Cartographie de la végétation, précision &gt; 91 %</td></tr>
+          <tr><td>ExB</td><td class="formule">2B − R − G</td><td>Matériaux bleutés (déchets, eau)</td></tr>
+          <tr><td>VARI</td><td class="formule">(G−R)/(G+R−B)</td><td>Robuste aux variations d'illumination et d'atmosphère</td></tr>
+          <tr><td>ExR</td><td class="formule">1.4R − G</td><td>Tons chauds (bois secs, sols nus)</td></tr>
+          <tr><td>R/G</td><td class="formule">R / G</td><td>Distinguer le bois (marron) des autres matériaux</td></tr>
+          <tr><td>B/G</td><td class="formule">B / G</td><td>Matériaux bleutés/métalliques (déchets)</td></tr>
+          <tr><td>Brillance RMS</td><td class="formule">√((R²+G²+B²)/3)</td><td>Luminosité globale, indépendante de la teinte (sédiment, déchets)</td></tr>
+          <tr><td>Rugosité</td><td class="formule">σ(Z) local, sphère 10-15 cm</td><td>Surfaces lisses (eau) vs rugueuses (bois)</td></tr>
+          <tr><td>Normale Z</td><td class="formule">composante Z (ACP)</td><td>Surfaces horizontales (eau, sédiment) vs verticales (tronc, berge)</td></tr>
+        </tbody>
+        <caption>Indices pour l'analyse spectrale</caption>
+      </table>
+    </div>
+
+    <div class="bloc">
+      <h3>Extraction des volumes - 2.5D Delaunay</h3>
+      <p>
+        Le volume de l'embâcle est estimé par différence entre un MNS
+        calculé sur le nuage (grille + triangulation de Delaunay en 2,5D) et
+        une hauteur d'eau de référence. Simple et rapide, cette approche
+        reste adaptée aux structures géométriquement simples, mais perd en
+        fiabilité sur des formes complexes, un compromis discuté en détail
+        ci-dessous.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- 04 - DISCUSSION -->
+<!-- ============================================ -->
+<section class="chapitre panel" id="discussion">
+  <div class="wrap">
+    <div class="chap-head">
+      <div class="chap-num">04</div>
+      <h2>Discussion des résultats</h2>
+    </div>
+
+    <div class="bloc">
+      <h3>Corrections radiométriques</h3>
+      <p>
+        Deux leviers permettent de limiter les écarts radiométriques entre
+        vols. D'abord, une calibration en amont à l'aide d'une mire de
+        référence (type ColorChecker), photographiée systématiquement pour
+        recaler chaque vol vers une référence commune. Ensuite, voler dans
+        des conditions d'éclairage comparables d'un vol à l'autre : à plus
+        ou moins deux heures du midi solaire, en privilégiant les journées
+        de voile blanc plutôt que de plein soleil, quitte à accepter une
+        luminosité globale légèrement plus faible.
+      </p>
+    </div>
+
+    <div class="bloc">
+      <h3>Comparaison des méthodes de reconstruction 3D</h3>
+      <p>
+        <span class="chiffre">+40 %</span>de surestimation en photogrammétrie
+        , la reconstruction gère mal les surfaces d'eau, peu texturées et
+        sujettes aux reflets, ce qui place artificiellement la zone aval de
+        l'embâcle plus haute que l'amont. Des points de contrôle au sol
+        (GCP) ramèneraient l'erreur globale du modèle (1,38 m) à quelques
+        centimètres ; un plan de vol plus lent limiterait aussi le flou de
+        mouvement observé sur certains clichés.
+      </p>
+      <p>
+        <span class="chiffre">−29 %</span>de sous-estimation avec le LiDAR
+        portable Unitree L2, due aux trous dans le nuage liés aux
+        contraintes d'accès du site (kayak, zones difficiles à pied) plutôt
+        qu'à une limite du capteur. L'interpolation des trous (krigeage,
+        pondération inverse à la distance) ou le recours aux alpha-shapes
+        sont des pistes pour réduire ce biais.
+      </p>
+      <p>
+        Le pas de la grille MNS (0,05 à 0,5 m) influence peu le résultat
+        final : le volume au DJI Matrice 400 se stabilise autour de
+        220-250 m³, tandis que celui de l'Unitree L2 converge vers la même
+        valeur à mesure que les trous se comblent avec un pas plus grossier
+        , confirmant l'intérêt de ce capteur pour un suivi temporel répété.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Critère</th><th>DJI Matrice 400</th><th>DJI Mini 3</th><th>LiDAR Unitree L2</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Précision volumétrique</td>
+            <td>Élevée</td>
+            <td>Surestimation (+40 %)</td>
+            <td>Sous-estimation (−29 % sans interpolation)</td>
+          </tr>
+          <tr>
+            <td>Coût de déploiement</td>
+            <td>Élevé</td>
+            <td>Faible</td>
+            <td>Faible</td>
+          </tr>
+          <tr>
+            <td>Contraintes réglementaires</td>
+            <td>Fortes (vol drone)</td>
+            <td>Moyennes (petit drone)</td>
+            <td>Faibles</td>
+          </tr>
+          <tr>
+            <td>Usage recommandé</td>
+            <td>Caractérisation ponctuelle précise</td>
+            <td>Estimation rapide et indicative</td>
+            <td>Suivi temporel répété</td>
+          </tr>
+        </tbody>
+        <caption>Synthèse des critères de choix entre méthodes d'acquisition</caption>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    FANTOU Baptiste - Master 1 OTG - Université de Strasbourg
+  </div>
+</footer>
+
+<script src="script.js" defer></script>
+</body>
+</html>
